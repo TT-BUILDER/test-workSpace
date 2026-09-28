@@ -1,0 +1,123 @@
+<!--
+<html>
+    <head>
+        <title>.png to Data site</title>
+    </head>
+    <body>
+        
+        <img id="img" src="./Tamakko.jpeg" hidden>
+
+        <script>
+            
+            const img = document.getElementById("img");
+
+            img.onload = () => {
+                img.crossOrigin = 
+                getPixelData(img);
+
+            };
+            
+            function getPixelData(image){
+                
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+
+                canvas.width = image.naturalWidth;
+                canvas.height = image.naturalHeight;
+
+                ctx.drawImage(img,canvas.width,canvas.height);
+
+                const imgD = new Image();
+                imgD.crossOrigin = "anonymous";
+                imgD = ctx.getImageData(0,0,canvas.width,canvas.height);
+
+                console.log(imgD);
+                
+            }
+
+        </script>
+        
+    </body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Pixel Data</title>
+</head>
+<body>
+
+    <!-- 結果を出力するpタグ -->
+    <p id="output">画像を読み込み中...</p>
+
+    <script>
+        
+        // 出力先のpタグを取得
+        const outputParagraph = document.getElementById('output');
+
+        // 1. 画像オブジェクトを作成
+        const img = new Image();
+
+        // 同一フォルダ内（同オリジン）からの読み込みですが、
+        // 環境構築状況によるCORSエラーを防ぐため anonymous を設定しておきます
+        img.crossOrigin = 'anonymous'; 
+
+        // 画像の読み込み完了時の処理
+        img.onload = function() {
+            // 2. メモリ上に非表示のキャンバスを作成
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // キャンバスのサイズを画像に合わせる
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // キャンバスに画像を描画
+            ctx.drawImage(img, 0, 0);
+
+            try {
+                // 3. ピクセルデータを取得
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data; // [R, G, B, A, R, G, B, A, ...] の一連の配列
+
+                const pixelStrings = [];
+
+                // 4. ピクセルデータをループ処理 (4バイトごとに R, G, B, A)
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    // data[i + 3] は Alpha（透明度）です。今回は使用しません。
+
+                    pixelStrings.push(`{${r},${g},${b}}`);
+                }
+
+                // 5. 指定のフォーマットに組み立て
+                // 先頭: [width]px * [height]px : 
+                // データ: {{R,G,B},{R,G,B},...}
+                const header = `${img.width}px * ${img.height}px : `;
+                const dataBody = `{${pixelStrings.join(',')}}`;
+
+                // pタグに書き込み
+                outputParagraph.textContent = header + dataBody;
+
+            } catch (error) {
+                console.error(error);
+                outputParagraph.textContent = 'エラーが発生しました。ローカルサーバー経由で起動しているか確認してください。';
+            }
+        };
+
+        // 画像の読み込み失敗時の処理
+        img.onerror = function() {
+            outputParagraph.textContent = '画像の読み込みに失敗しました。「./img.jpeg」のパスが正しいか確認してください。';
+        };
+
+        // 6. 画像の読み込みを開始
+        img.src = './Tamakko.jpeg';
+
+    </script>
+</body>
+</html>
+
